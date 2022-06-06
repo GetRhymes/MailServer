@@ -50,6 +50,8 @@ class SecurityConfiguration : WebSecurityConfigurerAdapter() {
             .antMatchers("/lists/**").hasAuthority("USER")
             .antMatchers("/login**").permitAll()
             .antMatchers("/login/**").permitAll()
+            .antMatchers("/swagger*/**").permitAll()
+            .antMatchers("/v2/**").permitAll()
             .anyRequest().authenticated()
 
         http

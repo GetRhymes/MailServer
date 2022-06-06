@@ -148,7 +148,7 @@ VALUES ('ad7a8951-2f95-4619-802b-1285c3279623', '887f38df-9e1f-407f-b82d-c28cedd
 INSERT INTO email
 VALUES ('b3b6a8f5-9fea-4f15-8fca-5519bd52a737',
         'noreply@poly-sender.ru',
-        'fon?gfMKUC%d',
+        'aqSxAPQPFxwEyISSAsMA4A==',
         '/noreply');
 
 INSERT INTO role

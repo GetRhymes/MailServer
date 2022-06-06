@@ -12,7 +12,6 @@ import javax.mail.AuthenticationFailedException
 import javax.mail.Flags
 import javax.mail.Folder
 import javax.mail.Session
-import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 import javax.mail.internet.MimeMultipart
 
@@ -101,21 +100,13 @@ class EmailBox {
         val mimeMessage = javaMailSender.createMimeMessage()
         val content = messageFields.contentMultipart != null
         val email = MimeMessageHelper(mimeMessage, content, "UTF-8")
-        email.setTo(messageFields.recipientAddress!!.toTypedArray()[0])
-        if (messageFields.recipientAddress!!.isNotEmpty()) {
-            email.setBcc(
-                messageFields.recipientAddress!!
-                    .toList().subList(1, messageFields.recipientAddress!!.size)
-                    .toTypedArray()
-            )
-        }
+        email.setBcc(messageFields.recipientAddress!!.toTypedArray())
         if (content) {
             email.mimeMessage.setContent(messageFields.contentMultipart)
         } else {
-            email.mimeMessage.setText(messageFields.contentString)
+            email.mimeMessage.setText(messageFields.contentString!!.replace("""<[a-z/]+>""".toRegex(), ""))
         }
         email.setSubject(messageFields.subject)
-        email.setFrom(InternetAddress(messageFields.senderAddress))
         javaMailSender.send(mimeMessage)
     }
 
@@ -124,7 +115,6 @@ class EmailBox {
         inbox.open(Folder.READ_WRITE)
         for (messageIndex in 1..inbox.messageCount) {
             val message = inbox.getMessage(messageIndex) as MimeMessage
-
             val messageFields = getMessageFields(message, senderAddress, recipients)
             listMessage.add(messageFields)
             message.setFlag(Flags.Flag.DELETED, true)

@@ -7,7 +7,7 @@ data class MessageFields(
     var recipientAddress: Set<String>?,
     val subject: String,
     var contentMultipart: MimeMultipart? = null,
-    var contentString: String? = null
+    var contentString: String? = null,
 ) {
     override fun toString(): String {
         return "MessageFields(senderAddress='$senderAddress', " +

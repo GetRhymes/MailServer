@@ -2,10 +2,14 @@ package com.poly.intelligentmessaging.mailserver.services
 
 import com.poly.intelligentmessaging.mailserver.components.DSLHandler
 import com.poly.intelligentmessaging.mailserver.components.EmailBox
+import com.poly.intelligentmessaging.mailserver.components.PasswordEmailManager
 import com.poly.intelligentmessaging.mailserver.domain.EmailData
 import com.poly.intelligentmessaging.mailserver.domain.dto.*
 import com.poly.intelligentmessaging.mailserver.domain.models.*
-import com.poly.intelligentmessaging.mailserver.repositories.*
+import com.poly.intelligentmessaging.mailserver.repositories.EmailRepository
+import com.poly.intelligentmessaging.mailserver.repositories.FilterRepository
+import com.poly.intelligentmessaging.mailserver.repositories.StaffRepository
+import com.poly.intelligentmessaging.mailserver.repositories.StudentRepository
 import com.poly.intelligentmessaging.mailserver.util.BASIC_ID_STAFF
 import com.poly.intelligentmessaging.mailserver.util.EmailAuthenticator
 import org.springframework.beans.factory.annotation.Autowired
@@ -43,7 +47,7 @@ class FilterService {
     private val attributeService: AttributeService? = null
 
     @Autowired
-    private val attributeRepository: AttributeRepository? = null
+    private val passwordEmailManager: PasswordEmailManager? = null
 
     fun getFilters(idStaff: String, isShort: Boolean): MutableSet<FiltersDTO> {
         val resultSample = mutableSetOf<FiltersDTO>()
@@ -160,7 +164,7 @@ class FilterService {
         val filterModel = filterRepository!!.findById(UUID.fromString(filterIdDTO.idFilter)).get()
         val emailAnswer = filterModel.emailAnswer!!
         val staffEmail = filterModel.staff!!.person!!.email!!
-        val emailAuth = EmailAuthenticator(emailAnswer.email!!, emailAnswer.password!!)
+        val emailAuth = EmailAuthenticator(emailAnswer.email!!, passwordEmailManager!!.decrypt(emailAnswer.password!!))
         emailBox!!.getEmails(emailAuth, setOf(staffEmail))
         return filterIdDTO
     }
@@ -168,7 +172,7 @@ class FilterService {
     fun sendEmails(filterModel: FilterModel) {
         val recipient = filterModel.students!!.associateWith { it.person!!.email!! }.values.toSet()
         val emailSend = filterModel.emailSend!!
-        val emailAuth = EmailAuthenticator(emailSend.email!!, emailSend.password!!)
+        val emailAuth = EmailAuthenticator(emailSend.email!!, passwordEmailManager!!.decrypt(emailSend.password!!))
         emailBox!!.sendEmails(emailAuth, recipient, filterModel.emailAnswer!!.email!!)
     }
 
@@ -265,15 +269,23 @@ class FilterService {
         val domain = "@poly-sender.ru"
         val nameSend = "f" + (staff.id.toString() + filterName + Random.nextInt(10)).hashCode().toString() + "_s"
         val nameAnswer = "f" + (staff.id.toString() + filterName + Random.nextInt(10)).hashCode().toString() + "_a"
-        val send = EmailData(nameSend + domain, staff.id.toString() + "_s", "/$nameSend")
-        val answer = EmailData(nameAnswer + domain, staff.id.toString() + "a", "/$nameAnswer")
+        val send = EmailData(
+            nameSend + domain,
+            passwordEmailManager!!.encrypt(staff.id.toString() + "_s"),
+            "/$nameSend"
+        )
+        val answer = EmailData(
+            nameAnswer + domain,
+            passwordEmailManager.encrypt(staff.id.toString() + "_a"),
+            "/$nameAnswer"
+        )
         return send to answer
     }
 
     private fun getNumberOfMails(idFilter: String): Int {
         val filterModel = filterRepository!!.findById(UUID.fromString(idFilter)).get()
         val emailAnswer = filterModel.emailAnswer!!
-        val emailAuth = EmailAuthenticator(emailAnswer.email!!, emailAnswer.password!!)
+        val emailAuth = EmailAuthenticator(emailAnswer.email!!, passwordEmailManager!!.decrypt(emailAnswer.password!!))
         return emailBox!!.getNumberOfMails(emailAuth)
     }
 
